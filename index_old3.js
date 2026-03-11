@@ -1,5 +1,5 @@
 const express = require("express");
-const chromium = require("chrome-aws-lambda");
+const puppeteer = require("puppeteer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,19 +13,13 @@ app.get("/dot/:number", async (req, res) => {
     const url = `https://safer.fmcsa.dot.gov/query.asp?query_type=queryCarrierSnapshot&query_param=USDOT&query_string=${dot}`;
 
     try {
-        const browser = await chromium.puppeteer.launch({
-            args: chromium.args,
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath,
-            headless: chromium.headless
-        });
-
+        const browser = await puppeteer.launch({ args: ["--no-sandbox"] });
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: "networkidle2" });
 
         const data = await page.evaluate(() => {
             const rows = Array.from(document.querySelectorAll("table tr"));
-            const result = {};
+            let result = {};
             rows.forEach(row => {
                 const cells = row.querySelectorAll("td");
                 if (cells.length === 2) {
